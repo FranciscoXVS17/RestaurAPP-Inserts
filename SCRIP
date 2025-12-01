@@ -1,0 +1,242 @@
+/* =========================================================
+   LA BOCATA
+   ========================================================= */
+
+-- 1. ESTRUCTURA DE TABLAS (SCHEMA)
+CREATE TABLE restaurante (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100),
+    rfc VARCHAR(20)
+);
+
+CREATE TABLE sucursal (
+    id SERIAL PRIMARY KEY,
+    restaurante_id INT REFERENCES restaurante(id),
+    nombre VARCHAR(100),
+    direccion VARCHAR(200),
+    region VARCHAR(100),
+    telefono VARCHAR(20)
+);
+
+CREATE TABLE menu (
+    menu_id SERIAL PRIMARY KEY,
+    sucursal_id INT REFERENCES sucursal(id),
+    nombre VARCHAR(100),
+    hora_inicio TIME,
+    hora_fin TIME,
+    activo BOOLEAN,
+    fecha_creacion TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE categoria (
+    categoria_id SERIAL PRIMARY KEY,
+    menu_id INT REFERENCES menu(menu_id),
+    nombre VARCHAR(100)
+);
+
+CREATE TABLE producto (
+    producto_id SERIAL PRIMARY KEY,
+    categoria_id INT REFERENCES categoria(categoria_id),
+    nombre VARCHAR(150),
+    descripcion TEXT,
+    precio_unitario DECIMAL(10,2),
+    es_paquete BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE producto_componente (
+    id SERIAL PRIMARY KEY,
+    id_producto_padre INT REFERENCES producto(producto_id),
+    id_producto_hijo INT REFERENCES producto(producto_id),
+    cantidad INT,
+    es_opcional BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE promocion (
+    promocion_id SERIAL PRIMARY KEY,
+    nombre VARCHAR(150),
+    esta_activo BOOLEAN DEFAULT TRUE,
+    valor_porcentaje DECIMAL(5,2),
+    monto_minimo DECIMAL(10,2),
+    dias_aplicables VARCHAR(100),
+    tipo_beneficio VARCHAR(50), 
+    fecha_hora_inicio TIMESTAMP,
+    fecha_hora_fin TIMESTAMP
+);
+
+CREATE TABLE descuento (
+    descuento_id SERIAL PRIMARY KEY,
+    nombre_convenio VARCHAR(100),
+    tipo VARCHAR(50),
+    porcentaje DECIMAL(5,2),
+    monto_fijo DECIMAL(10,2),
+    empresa VARCHAR(100),
+    activo BOOLEAN DEFAULT TRUE
+);
+
+/* =========================================================
+   2. CARGA DE DATOS BASE
+   ========================================================= */
+INSERT INTO restaurante (nombre, rfc) VALUES ('La Bocata', 'BOC230515XYZ');
+
+INSERT INTO sucursal (restaurante_id, nombre, direccion, region, telefono)
+VALUES
+((SELECT id FROM restaurante WHERE nombre='La Bocata'), 'La Bocata Centro', 'Calle Bravo y Torres', 'Centro', '2288112233'),
+((SELECT id FROM restaurante WHERE nombre='La Bocata'), 'La Bocata Universidad', 'Av. Universidad Veracruzana 122', 'Zona Universitaria', '2288445566');
+
+INSERT INTO menu (nombre, hora_inicio, hora_fin, activo) 
+VALUES ('Menú General', '07:00:00', '23:59:00', TRUE);
+
+/* =========================================================
+   3. CATEGORÍAS
+   ========================================================= */
+INSERT INTO categoria (menu_id, nombre) VALUES 
+((SELECT menu_id FROM menu LIMIT 1), 'Americanos y Espressos'),
+((SELECT menu_id FROM menu LIMIT 1), 'Latte y Capuccino'),
+((SELECT menu_id FROM menu LIMIT 1), 'Marrocchino'),
+((SELECT menu_id FROM menu LIMIT 1), 'Tisanas y Tés'),
+((SELECT menu_id FROM menu LIMIT 1), 'Bebidas Frías'),
+((SELECT menu_id FROM menu LIMIT 1), 'Jugos y Jarras'),
+((SELECT menu_id FROM menu LIMIT 1), 'Malteadas y Batidos'),
+((SELECT menu_id FROM menu LIMIT 1), 'Sodas'),
+((SELECT menu_id FROM menu LIMIT 1), 'Entradas y Quesos'),
+((SELECT menu_id FROM menu LIMIT 1), 'Caldos y Sopas'),
+((SELECT menu_id FROM menu LIMIT 1), 'Para Compartir'),
+((SELECT menu_id FROM menu LIMIT 1), 'Ensaladas'),
+((SELECT menu_id FROM menu LIMIT 1), 'Desayunos'),
+((SELECT menu_id FROM menu LIMIT 1), 'Sandwich y Cuernitos'),
+((SELECT menu_id FROM menu LIMIT 1), 'Antojitos'),
+((SELECT menu_id FROM menu LIMIT 1), 'Platos Fuertes'),
+((SELECT menu_id FROM menu LIMIT 1), 'Especialidad Italianos'),
+((SELECT menu_id FROM menu LIMIT 1), 'Pastas y Pizzas'),
+((SELECT menu_id FROM menu LIMIT 1), 'Pan Dulce y Repostería'),
+((SELECT menu_id FROM menu LIMIT 1), 'Postres'),
+((SELECT menu_id FROM menu LIMIT 1), 'Mixología y Licores'),
+((SELECT menu_id FROM menu LIMIT 1), 'Cervezas'),
+-- Categoría especial para productos que no están en la carta pero sí en paquetes
+((SELECT menu_id FROM menu LIMIT 1), 'Extras y Paquetes');
+
+/* =========================================================
+   4. PRODUCTOS DEL MENÚ
+   ========================================================= */
+
+-- CAFÉ Y TÉ
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
+((SELECT categoria_id FROM categoria WHERE nombre='Americanos y Espressos'), 'Americano Chico', 40, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Americanos y Espressos'), 'Americano Grande', 43, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Americanos y Espressos'), 'Espresso', 40, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Latte y Capuccino'), 'Latte / Capuccino', 55, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Latte y Capuccino'), 'Chocolate Caliente', 60, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Latte y Capuccino'), 'Chai Latte', 79, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Tisanas y Tés'), 'Té Caliente', 39, FALSE);
+
+-- BEBIDAS FRÍAS
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
+((SELECT categoria_id FROM categoria WHERE nombre='Bebidas Frías'), 'Frappuccino Clásico', 77, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Bebidas Frías'), 'Café Frío', 70, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Jugos y Jarras'), 'Jugo de Naranja', 63, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Jugos y Jarras'), 'Limonada Natural', 40, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Jugos y Jarras'), 'Jarra Clericot', 250, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Jugos y Jarras'), 'Jarra Sangría', 250, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Jugos y Jarras'), 'Jarra Tinto de Verano', 250, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Sodas'), 'Refresco', 40, FALSE);
+
+-- ALIMENTOS
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
+((SELECT categoria_id FROM categoria WHERE nombre='Caldos y Sopas'), 'Sopa Azteca', 72, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Para Compartir'), 'Parrillada Bocata', 1011, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Ensaladas'), 'Ensalada César con Pollo', 170, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Desayunos'), 'Hotcakes', 79, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Antojitos'), 'Chilaquiles Clásicos', 119, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Platos Fuertes'), 'Cecina Normal', 266, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Especialidad Italianos'), 'Bocata Jamón Serrano', 181, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Pastas y Pizzas'), 'Pasta Alfredo', 144, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Pastas y Pizzas'), 'Focaccia Margarita', 144, FALSE);
+
+-- POSTRES Y PAN
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
+((SELECT categoria_id FROM categoria WHERE nombre='Postres'), 'Postre Individual (Varios)', 75, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Pan Dulce y Repostería'), 'Concha', 20, FALSE);
+
+-- BAR
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
+((SELECT categoria_id FROM categoria WHERE nombre='Mixología y Licores'), 'Wine Mixer (Copa)', 90, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Mixología y Licores'), 'Daiquiri', 90, FALSE), 
+((SELECT categoria_id FROM categoria WHERE nombre='Mixología y Licores'), 'Mezcalina', 85, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Mixología y Licores'), 'Margarita', 90, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Mixología y Licores'), 'Mojito', 90, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Mixología y Licores'), 'Long Island Iced Tea', 125, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Mixología y Licores'), 'Ginebra Mix', 109, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Mixología y Licores'), 'Mocktail (Sin Alcohol)', 70, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Cervezas'), 'Cerveza Nacional', 45, FALSE);
+
+/* =========================================================
+   5. PRODUCTOS OCULTOS (Necesarios para Paquetes/Promos)
+   Estos NO están en el menú impreso, pero se usan en los combos.
+  
+   ========================================================= */
+
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
+-- Tamales para "Paquete 1, 2 y 3"
+((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Tamal Bollito', 25, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Tamal Chanchamito', 25, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Tamal de Masa Colada', 30, FALSE),
+
+-- Mini Pan para los paquetes de desayuno (El menú tiene minis específicos, este es el genérico para paquete)
+((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Mini Pan Dulce (Paquete)', 12, FALSE);
+
+/* =========================================================
+   6. CREACIÓN DE PAQUETES (Productos Compuestos)
+   ========================================================= */
+
+-- Paquete Tamal 1: Bollito + Americano Gde + Mini Pan = $85
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) 
+VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Paq. Tamal 1 (Bollito)', 85, TRUE);
+
+INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) VALUES
+((SELECT producto_id FROM producto WHERE nombre='Paq. Tamal 1 (Bollito)'), (SELECT producto_id FROM producto WHERE nombre='Tamal Bollito'), 1),
+((SELECT producto_id FROM producto WHERE nombre='Paq. Tamal 1 (Bollito)'), (SELECT producto_id FROM producto WHERE nombre='Americano Grande'), 1),
+((SELECT producto_id FROM producto WHERE nombre='Paq. Tamal 1 (Bollito)'), (SELECT producto_id FROM producto WHERE nombre='Mini Pan Dulce (Paquete)'), 1);
+
+-- Paquete Tamal 2: 2 Tamales (Bollito/Chanchamito) + Americano Gde = $101
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) 
+VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Paq. Tamal 2 (Bollito)', 101, TRUE);
+
+INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) VALUES
+((SELECT producto_id FROM producto WHERE nombre='Paq. Tamal 2 (Bollito)'), (SELECT producto_id FROM producto WHERE nombre='Tamal Bollito'), 2),
+((SELECT producto_id FROM producto WHERE nombre='Paq. Tamal 2 (Bollito)'), (SELECT producto_id FROM producto WHERE nombre='Americano Grande'), 1);
+
+-- Paquete Parrillada: Parrillada + Jarra Clericot = $1200
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) 
+VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Paq. Parrillada & Clericot', 1200, TRUE);
+
+INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) VALUES
+((SELECT producto_id FROM producto WHERE nombre='Paq. Parrillada & Clericot'), (SELECT producto_id FROM producto WHERE nombre='Parrillada Bocata'), 1),
+((SELECT producto_id FROM producto WHERE nombre='Paq. Parrillada & Clericot'), (SELECT producto_id FROM producto WHERE nombre='Jarra Clericot'), 1);
+
+-- Paquete Postre: Postre individual + Capuchino = $100
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) 
+VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Paq. Postre & Café', 100, TRUE);
+
+INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) VALUES
+((SELECT producto_id FROM producto WHERE nombre='Paq. Postre & Café'), (SELECT producto_id FROM producto WHERE nombre='Postre Individual (Varios)'), 1),
+((SELECT producto_id FROM producto WHERE nombre='Paq. Postre & Café'), (SELECT producto_id FROM producto WHERE nombre='Latte / Capuccino'), 1);
+
+/* =========================================================
+   7. PROMOCIONES Y REGLAS
+   ========================================================= */
+
+-- Promociones vigentes extraídas de la imagen
+INSERT INTO promocion (nombre, dias_aplicables, tipo_beneficio, fecha_hora_inicio, fecha_hora_fin) VALUES
+('3x2 Cervezas Buen Fin', 'Lunes,Martes,Miércoles,Jueves,Viernes,Sábado,Domingo', '3X2', '2025-11-11 00:00:00', '2025-11-18 23:59:00'),
+('2x1 Mocktails Sin Alcohol', 'Todos', '2X1', '2025-05-31 00:00:00', '2025-06-01 23:59:00');
+
+INSERT INTO promocion (nombre, dias_aplicables, tipo_beneficio) VALUES
+('2x1 Cocteles Seleccionados', 'Miércoles,Jueves,Domingo', '2X1'),
+('2x1 Mezcal en sucursales', 'Todos', '2X1');
+
+-- Promociones "Fabrica tus sentidos" (Abril)
+INSERT INTO promocion (nombre, tipo_beneficio, monto_minimo, fecha_hora_inicio, fecha_hora_fin) VALUES
+('2x$110 Margaritas y Mojitos', 'PRECIO_FIJO_CANTIDAD', 110, '2025-04-01 00:00:00', '2025-04-30 23:59:00'),
+('2x$497 Jarras Tinto/Sangría', 'PRECIO_FIJO_CANTIDAD', 497, '2025-04-01 00:00:00', '2025-04-30 23:59:00'),
+('2x$124 Mezcalinas', 'PRECIO_FIJO_CANTIDAD', 124, '2025-04-01 00:00:00', '2025-04-30 23:59:00'),
+('3x1 Tequilas', '3X1', 0, '2025-04-01 00:00:00', '2025-04-30 23:59:00');
