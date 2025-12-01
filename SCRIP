@@ -112,8 +112,8 @@ INSERT INTO categoria (menu_id, nombre) VALUES
 ((SELECT menu_id FROM menu LIMIT 1), 'Postres'),
 ((SELECT menu_id FROM menu LIMIT 1), 'Mixología y Licores'),
 ((SELECT menu_id FROM menu LIMIT 1), 'Cervezas'),
--- Categoría especial para productos que no están en la carta pero sí en paquetes
-((SELECT menu_id FROM menu LIMIT 1), 'Extras y Paquetes');
+((SELECT menu_id FROM menu LIMIT 1), 'Temporada y Extras'), -- Para ingredientes internos de temporada
+((SELECT menu_id FROM menu LIMIT 1), 'Paquetes y Combos');
 
 /* =========================================================
    4. PRODUCTOS DEL MENÚ
@@ -152,6 +152,13 @@ INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
 ((SELECT categoria_id FROM categoria WHERE nombre='Pastas y Pizzas'), 'Pasta Alfredo', 144, FALSE),
 ((SELECT categoria_id FROM categoria WHERE nombre='Pastas y Pizzas'), 'Focaccia Margarita', 144, FALSE);
 
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
+((SELECT categoria_id FROM categoria WHERE nombre='Antojitos'), 'Tamal Bollito', 30, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Antojitos'), 'Tamal Chanchamito', 30, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Antojitos'), 'Tamal de Masa Colada', 35, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Pan Dulce y Repostería'), 'Mini Pan Dulce (Pieza)', 15, FALSE);
+
+
 -- POSTRES Y PAN
 INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
 ((SELECT categoria_id FROM categoria WHERE nombre='Postres'), 'Postre Individual (Varios)', 75, FALSE),
@@ -170,36 +177,30 @@ INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
 ((SELECT categoria_id FROM categoria WHERE nombre='Cervezas'), 'Cerveza Nacional', 45, FALSE);
 
 /* =========================================================
-   5. PRODUCTOS OCULTOS (Necesarios para Paquetes/Promos)
-   Estos NO están en el menú impreso, pero se usan en los combos.
-  
+   5. PRODUCTOS EXTRAS INTERNOS (Para paquetes especiales)
    ========================================================= */
-
 INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) VALUES
--- Tamales para "Paquete 1, 2 y 3"
-((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Tamal Bollito', 25, FALSE),
-((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Tamal Chanchamito', 25, FALSE),
-((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Tamal de Masa Colada', 30, FALSE),
-
--- Mini Pan para los paquetes de desayuno (El menú tiene minis específicos, este es el genérico para paquete)
-((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Mini Pan Dulce (Paquete)', 12, FALSE);
+((SELECT categoria_id FROM categoria WHERE nombre='Temporada y Extras'), 'Hamburguesa Pan de Muerto (Solo)', 150, FALSE), 
+((SELECT categoria_id FROM categoria WHERE nombre='Temporada y Extras'), 'Pan de Muerto', 70, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Temporada y Extras'), 'Papas Fritas (Guarnición)', 40, FALSE),
+((SELECT categoria_id FROM categoria WHERE nombre='Temporada y Extras'), 'Rajas (Guarnición)', 20, FALSE);
 
 /* =========================================================
-   6. CREACIÓN DE PAQUETES (Productos Compuestos)
+   6. CREACIÓN DE PAQUETES (COMBOS CON PRECIO FIJO)
    ========================================================= */
 
 -- Paquete Tamal 1: Bollito + Americano Gde + Mini Pan = $85
 INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) 
-VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Paq. Tamal 1 (Bollito)', 85, TRUE);
+VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Paquetes y Combos'), 'Paq. Tamal 1 (Bollito)', 85, TRUE);
 
 INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) VALUES
 ((SELECT producto_id FROM producto WHERE nombre='Paq. Tamal 1 (Bollito)'), (SELECT producto_id FROM producto WHERE nombre='Tamal Bollito'), 1),
 ((SELECT producto_id FROM producto WHERE nombre='Paq. Tamal 1 (Bollito)'), (SELECT producto_id FROM producto WHERE nombre='Americano Grande'), 1),
-((SELECT producto_id FROM producto WHERE nombre='Paq. Tamal 1 (Bollito)'), (SELECT producto_id FROM producto WHERE nombre='Mini Pan Dulce (Paquete)'), 1);
+((SELECT producto_id FROM producto WHERE nombre='Paq. Tamal 1 (Bollito)'), (SELECT producto_id FROM producto WHERE nombre='Mini Pan Dulce (Pieza)'), 1);
 
 -- Paquete Tamal 2: 2 Tamales (Bollito/Chanchamito) + Americano Gde = $101
 INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) 
-VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Paq. Tamal 2 (Bollito)', 101, TRUE);
+VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Paquetes y Combos'), 'Paq. Tamal 2 (Bollito)', 101, TRUE);
 
 INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) VALUES
 ((SELECT producto_id FROM producto WHERE nombre='Paq. Tamal 2 (Bollito)'), (SELECT producto_id FROM producto WHERE nombre='Tamal Bollito'), 2),
@@ -207,7 +208,7 @@ INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) 
 
 -- Paquete Parrillada: Parrillada + Jarra Clericot = $1200
 INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) 
-VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Paq. Parrillada & Clericot', 1200, TRUE);
+VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Paquetes y Combos'), 'Paq. Parrillada & Clericot', 1200, TRUE);
 
 INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) VALUES
 ((SELECT producto_id FROM producto WHERE nombre='Paq. Parrillada & Clericot'), (SELECT producto_id FROM producto WHERE nombre='Parrillada Bocata'), 1),
@@ -215,17 +216,30 @@ INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) 
 
 -- Paquete Postre: Postre individual + Capuchino = $100
 INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) 
-VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Extras y Paquetes'), 'Paq. Postre & Café', 100, TRUE);
+VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Paquetes y Combos'), 'Paq. Postre & Café', 100, TRUE);
 
 INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) VALUES
 ((SELECT producto_id FROM producto WHERE nombre='Paq. Postre & Café'), (SELECT producto_id FROM producto WHERE nombre='Postre Individual (Varios)'), 1),
 ((SELECT producto_id FROM producto WHERE nombre='Paq. Postre & Café'), (SELECT producto_id FROM producto WHERE nombre='Latte / Capuccino'), 1);
 
+-- PAQUETE DE TEMPORADA (Hamburmuerta)
+INSERT INTO producto (categoria_id, nombre, precio_unitario, es_paquete) 
+VALUES ((SELECT categoria_id FROM categoria WHERE nombre='Temporada y Extras'), 'Hamburmuerta', 190, TRUE);
+
+INSERT INTO producto_componente (id_producto_padre, id_producto_hijo, cantidad) VALUES
+((SELECT producto_id FROM producto WHERE nombre='Hamburmuerta'), (SELECT producto_id FROM producto WHERE nombre='Hamburguesa Pan de Muerto (Solo)'), 1),
+((SELECT producto_id FROM producto WHERE nombre='Hamburmuerta'), (SELECT producto_id FROM producto WHERE nombre='Papas Fritas (Guarnición)'), 1),
+((SELECT producto_id FROM producto WHERE nombre='Hamburmuerta'), (SELECT producto_id FROM producto WHERE nombre='Rajas (Guarnición)'), 1);
+
 /* =========================================================
    7. PROMOCIONES Y REGLAS
    ========================================================= */
 
--- Promociones vigentes extraídas de la imagen
+-- Vigencia Hamburmuerta: 20 Oct - 05 Nov
+INSERT INTO promocion (nombre, dias_aplicables, tipo_beneficio, monto_minimo, fecha_hora_inicio, fecha_hora_fin)
+VALUES ('Temporada Día de Muertos: Hamburmuerta', 'Todos', 'PRECIO_FIJO_PAQUETE', 190, '2025-10-20 00:00:00', '2025-11-05 23:59:00');
+
+-- Promos Generales
 INSERT INTO promocion (nombre, dias_aplicables, tipo_beneficio, fecha_hora_inicio, fecha_hora_fin) VALUES
 ('3x2 Cervezas Buen Fin', 'Lunes,Martes,Miércoles,Jueves,Viernes,Sábado,Domingo', '3X2', '2025-11-11 00:00:00', '2025-11-18 23:59:00'),
 ('2x1 Mocktails Sin Alcohol', 'Todos', '2X1', '2025-05-31 00:00:00', '2025-06-01 23:59:00');
@@ -234,9 +248,8 @@ INSERT INTO promocion (nombre, dias_aplicables, tipo_beneficio) VALUES
 ('2x1 Cocteles Seleccionados', 'Miércoles,Jueves,Domingo', '2X1'),
 ('2x1 Mezcal en sucursales', 'Todos', '2X1');
 
--- Promociones "Fabrica tus sentidos" (Abril)
+-- Fabrica tus sentidos (Abril)
 INSERT INTO promocion (nombre, tipo_beneficio, monto_minimo, fecha_hora_inicio, fecha_hora_fin) VALUES
 ('2x$110 Margaritas y Mojitos', 'PRECIO_FIJO_CANTIDAD', 110, '2025-04-01 00:00:00', '2025-04-30 23:59:00'),
 ('2x$497 Jarras Tinto/Sangría', 'PRECIO_FIJO_CANTIDAD', 497, '2025-04-01 00:00:00', '2025-04-30 23:59:00'),
-('2x$124 Mezcalinas', 'PRECIO_FIJO_CANTIDAD', 124, '2025-04-01 00:00:00', '2025-04-30 23:59:00'),
 ('3x1 Tequilas', '3X1', 0, '2025-04-01 00:00:00', '2025-04-30 23:59:00');
